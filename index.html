@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Walkbook</title>
+
+
+<!-- =====================================================
+     PDF.JS
+===================================================== -->
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs"
+    type="module">
+</script>
+
+
+<style>
+
+/* =====================================================
+   RESET
+===================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+
+html,
+body {
+
+    margin: 0;
+
+    width: 100%;
+    height: 100%;
+
+    overflow: hidden;
+
+    background: #292929;
+
+    color: #f5f5f5;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+}
+
+
+/* =====================================================
+   BODY
+===================================================== */
+
+body {
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+header {
+
+    position: relative;
+
+    z-index: 500;
+
+    height: 60px;
+
+    padding:
+        0 28px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    color: #ffffff;
+
+    font-size: 11px;
+
+    letter-spacing:
+        0.06em;
+
+}
+
+
+.logo {
+
+    font-weight: 500;
+
+}
+
+
+.info {
+
+    opacity: 0.55;
+
+}
+
+
+/* =====================================================
+   BOOK CONTAINER
+===================================================== */
+
+.book-container {
+
+    position: relative;
+
+    flex: 1;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    perspective:
+        1800px;
+
+    /*
+        Space for side navigation.
+    */
+
+    padding:
+        30px 100px 55px;
+
+}
+
+
+/* =====================================================
+   BOOK
+
+   A5 = 148 × 210 mm
+
+   Two pages:
+   296 × 210
+
+   Ratio:
+   1.4095
+===================================================== */
+
+.book {
+
+    position: relative;
+
+    width:
+        min(82vw, 1050px);
+
+    aspect-ratio:
+        1.4095 / 1;
+
+    transform-style:
+        preserve-3d;
+
+}
+
+
+/* =====================================================
+   PAGE
+===================================================== */
+
+.page {
+
+    position: absolute;
+
+    top: 0;
+
+    width: 50%;
+
+    height: 100%;
+
+    overflow: hidden;
+
+    background: #ffffff;
+
+    transform-style:
+        preserve-3d;
+
+    backface-visibility:
+        hidden;
+
+    box-shadow:
+        0
+        10px
+        30px
+        rgba(0,0,0,0.25);
+
+}
+
+
+.page.left {
+
+    left: 0;
+
+    transform-origin:
+        right center;
+
+    border-right:
+        1px solid
+        rgba(0,0,0,0.10);
+
+}
+
+
+.page.right {
+
+    left: 50%;
+
+    transform-origin:
+        left center;
+
+    border-left:
+        1px solid
+        rgba(0,0,0,0.10);
+
+}
+
+
+.page canvas {
+
+    display: block;
+
+    width: 100%;
+
+    height: 100%;
+
+    object-fit: contain;
+
+}
+
+
+/* =====================================================
+   PAGE FLIP
+===================================================== */
+
+.page.flipping-right {
+
+    animation:
+        flipRight
+        0.8s
+        cubic-bezier(.4,0,.2,1)
+        forwards;
+
+}
+
+
+.page.flipping-left {
+
+    animation:
+        flipLeft
+        0.8s
+        cubic-bezier(.4,0,.2,1)
+        forwards;
+
+}
+
+
+@keyframes flipRight {
+
+    0% {
+
+        transform:
+            rotateY(0deg);
+
+        z-index: 20;
+
+    }
+
+    50% {
+
+        box-shadow:
+            -20px
+            15px
+            35px
+            rgba(0,0,0,0.25);
+
+    }
+
+    100% {
+
+        transform:
+            rotateY(-180deg);
+
+        z-index: 0;
+
+    }
+
+}
+
+
+@keyframes flipLeft {
+
+    0% {
+
+        transform:
+            rotateY(0deg);
+
+        z-index: 20;
+
+    }
+
+    50% {
+
+        box-shadow:
+            20px
+            15px
+            35px
+            rgba(0,0,0,0.25);
+
+    }
+
+    100% {
+
+        transform:
+            rotateY(180deg);
+
+        z-index: 0;
+
+    }
+
+}
+
+
+/* =====================================================
+   SIBYL FLOATING LAYER
+===================================================== */
+
+#floating-layer {
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 200;
+
+    overflow: hidden;
+
+    pointer-events: none;
+
+}
+
+
+/* =====================================================
+   SIBYL IMAGE
+
+   IMPORTANT:
+
+   The image is NOT shown at its
+   original pixel size.
+
+   It is scaled according to the
+   viewport.
+
+   Desktop:
+   10vw, max 150px
+
+   Mobile:
+   22vw, max 120px
+===================================================== */
+
+.floating-image {
+
+    position: absolute;
+
+    width:
+        clamp(
+            90px,
+            10vw,
+            150px
+        );
+
+    height: auto;
+
+    max-width: none;
+
+    max-height: none;
+
+    object-fit: contain;
+
+    user-select: none;
+
+    -webkit-user-drag: none;
+
+    pointer-events: auto;
+
+    cursor: grab;
+
+    touch-action: none;
+
+    /*
+        Small paper-like shadow.
+    */
+
+    filter:
+        drop-shadow(
+            3px
+            5px
+            8px
+            rgba(0,0,0,0.30)
+        );
+
+    transition:
+        opacity
+        0.5s
+        ease,
+
+        filter
+        0.2s
+        ease;
+
+}
+
+
+.floating-image:hover {
+
+    filter:
+        drop-shadow(
+            5px
+            8px
+            12px
+            rgba(0,0,0,0.40)
+        );
+
+}
+
+
+.floating-image.dragging {
+
+    cursor:
+        grabbing;
+
+    transition:
+        none;
+
+    filter:
+        drop-shadow(
+            6px
+            9px
+            14px
+            rgba(0,0,0,0.45)
+        );
+
+}
+
+
+.floating-image.removing {
+
+    opacity: 0;
+
+    pointer-events: none;
+
+}
+
+
+/* =====================================================
+   PAGE NAVIGATION BUTTONS
+===================================================== */
+
+.page-button {
+
+    position: fixed;
+
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+    z-index: 600;
+
+    width: 55px;
+
+    height: 100px;
+
+    padding: 0;
+
+    border: none;
+
+    background: transparent;
+
+    color: #ffffff;
+
+    font-family:
+        inherit;
+
+    font-size: 20px;
+
+    font-weight: 300;
+
+    cursor: pointer;
+
+    opacity: 0.55;
+
+    transition:
+        opacity 0.2s;
+
+}
+
+
+.page-button:hover {
+
+    opacity: 1;
+
+}
+
+
+#previousButton {
+
+    left: 0;
+
+}
+
+
+#nextButton {
+
+    right: 0;
+
+}
+
+
+/* =====================================================
+   PAGE NUMBER
+===================================================== */
+
+.page-number {
+
+    position: fixed;
+
+    left: 50%;
+
+    bottom: 18px;
+
+    transform:
+        translateX(-50%);
+
+    z-index: 600;
+
+    color: #ffffff;
+
+    font-size: 10px;
+
+    letter-spacing:
+        0.05em;
+
+    opacity: 0.45;
+
+}
+
+
+/* =====================================================
+   INVISIBLE CLICK AREAS
+
+   Clicking near the edges also
+   changes pages.
+===================================================== */
+
+.click-left,
+.click-right {
+
+    position: fixed;
+
+    top: 60px;
+
+    bottom: 60px;
+
+    width: 12%;
+
+    z-index: 90;
+
+    cursor: pointer;
+
+}
+
+
+.click-left {
+
+    left: 0;
+
+}
+
+
+.click-right {
+
+    right: 0;
+
+}
+
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 700px) {
+
+    header {
+
+        height:
+            50px;
+
+        padding:
+            0 16px;
+
+    }
+
+
+    .info {
+
+        display: none;
+
+    }
+
+
+    .book-container {
+
+        padding:
+            20px
+            50px
+            50px;
+
+    }
+
+
+    /*
+        On mobile, display one
+        A5 page at a time.
+    */
+
+    .book {
+
+        width:
+            min(92vw, 500px);
+
+        aspect-ratio:
+            148 / 210;
+
+    }
+
+
+    .page {
+
+        width: 100%;
+
+        left: 0 !important;
+
+    }
+
+
+    .page.left {
+
+        display: none;
+
+    }
+
+
+    .page.right {
+
+        border-left: none;
+
+    }
+
+
+    .page-button {
+
+        width: 42px;
+
+        height: 80px;
+
+        font-size: 18px;
+
+    }
+
+
+    /*
+        Smaller Sibyl images
+        relative to mobile screens.
+    */
+
+    .floating-image {
+
+        width:
+            clamp(
+                70px,
+                22vw,
+                120px
+            );
+
+    }
+
+
+    .page-number {
+
+        bottom: 12px;
+
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<header>
+
+    <div class="logo">
+        WALKBOOK
+    </div>
+
+    <div class="info">
+        A publication about walking
+    </div>
+
+</header>
+
+
+
+<!-- =====================================================
+     BOOK
+===================================================== -->
+
+<div class="book-container">
+
+    <div
+        class="book"
+        id="book"
+    >
+
+        <!-- LEFT A5 PAGE -->
+
+        <div
+            class="page left"
+            id="leftPage"
+        >
+
+            <canvas
+                id="leftCanvas">
+            </canvas>
+
+        </div>
+
+
+        <!-- RIGHT A5 PAGE -->
+
+        <div
+            class="page right"
+            id="rightPage"
+        >
+
+            <canvas
+                id="rightCanvas">
+            </canvas>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     SIBYL FLOATING LAYER
+===================================================== -->
+
+<div
+    id="floating-layer">
+</div>
+
+
+
+<!-- =====================================================
+     PAGE BUTTONS
+===================================================== -->
+
+<button
+    class="page-button"
+    id="previousButton"
+    onclick="previousPage()"
+    aria-label="Previous page"
+>
+
+    ←
+
+</button>
+
+
+<button
+    class="page-button"
+    id="nextButton"
+    onclick="nextPage()"
+    aria-label="Next page"
+>
+
+    →
+
+</button>
+
+
+
+<!-- =====================================================
+     PAGE NUMBER
+===================================================== -->
+
+<div
+    class="page-number"
+    id="pageNumber"
+>
+
+    1 / —
+
+</div>
+
+
+
+<script type="module">
+
+
+/* =====================================================
+   PDF.JS SETUP
+===================================================== */
+
+import * as pdfjsLib from
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs";
+
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs";
+
+
+/* =====================================================
+   PDF CONFIGURATION
+===================================================== */
+
+const PDF_FILE =
+    "./walkbook.pdf";
+
+
+let pdf = null;
+
+let currentPage = 1;
+
+let totalPages = 0;
+
+let isAnimating = false;
+
+
+/* =====================================================
+   LOAD PDF
+===================================================== */
+
+async function loadPDF() {
+
+    try {
+
+        pdf =
+            await pdfjsLib
+                .getDocument(PDF_FILE)
+                .promise;
+
+
+        totalPages =
+            pdf.numPages;
+
+
+        currentPage =
+            1;
+
+
+        await renderSpread();
+
+
+    } catch (error) {
+
+        console.error(
+            "Could not load Walkbook PDF:",
+            error
+        );
+
+
+        document
+            .getElementById(
+                "pageNumber"
+            )
+            .innerText =
+            "PDF ERROR";
+
+    }
+
+}
+
+
+/* =====================================================
+   RENDER ONE PDF PAGE
+===================================================== */
+
+async function renderPage(
+    pageNumber,
+    canvas
+) {
+
+    if (
+        pageNumber < 1 ||
+        pageNumber > totalPages
+    ) {
+
+        return;
+
+    }
+
+
+    const page =
+        await pdf.getPage(
+            pageNumber
+        );
+
+
+    const container =
+        canvas.parentElement;
+
+
+    const width =
+        container.clientWidth;
+
+
+    const height =
+        container.clientHeight;
+
+
+    /*
+        Get the real PDF dimensions.
+
+        This preserves the actual
+        A5 page ratio.
+    */
+
+    const baseViewport =
+        page.getViewport({
+            scale: 1
+        });
+
+
+    /*
+        Fit the PDF page inside
+        the available A5 container.
+    */
+
+    const scale =
+        Math.min(
+
+            width /
+                baseViewport.width,
+
+            height /
+                baseViewport.height
+
+        );
+
+
+    /*
+        Render at 2x resolution
+        for sharper text.
+    */
+
+    const viewport =
+        page.getViewport({
+
+            scale:
+                scale * 2
+
+        });
+
+
+    canvas.width =
+        viewport.width;
+
+
+    canvas.height =
+        viewport.height;
+
+
+    canvas.style.width =
+        "100%";
+
+
+    canvas.style.height =
+        "100%";
+
+
+    const context =
+        canvas.getContext(
+            "2d"
+        );
+
+
+    await page.render({
+
+        canvasContext:
+            context,
+
+        viewport:
+            viewport
+
+    }).promise;
+
+}
+
+
+/* =====================================================
+   RENDER DOUBLE PAGE
+===================================================== */
+
+async function renderSpread() {
+
+    const leftPage =
+        document.getElementById(
+            "leftPage"
+        );
+
+
+    const leftCanvas =
+        document.getElementById(
+            "leftCanvas"
+        );
+
+
+    const rightCanvas =
+        document.getElementById(
+            "rightCanvas"
+        );
+
+
+    /*
+        Cover / first page:
+        only show the right page.
+    */
+
+    if (
+        currentPage === 1
+    ) {
+
+        leftPage.style.visibility =
+            "hidden";
+
+    } else {
+
+        leftPage.style.visibility =
+            "visible";
+
+
+        await renderPage(
+            currentPage - 1,
+            leftCanvas
+        );
+
+    }
+
+
+    /*
+        Current right page.
+    */
+
+    if (
+        currentPage <= totalPages
+    ) {
+
+        await renderPage(
+            currentPage,
+            rightCanvas
+        );
+
+    }
+
+
+    /*
+        Update page counter.
+    */
+
+    document
+        .getElementById(
+            "pageNumber"
+        )
+        .innerText =
+        `${currentPage} / ${totalPages}`;
+
+}
+
+
+/* =====================================================
+   NEXT PAGE
+===================================================== */
+
+window.nextPage =
+async function () {
+
+    if (isAnimating) {
+
+        return;
+
+    }
+
+
+    if (
+        currentPage >= totalPages
+    ) {
+
+        return;
+
+    }
+
+
+    isAnimating = true;
+
+
+    const page =
+        document.getElementById(
+            "rightPage"
+        );
+
+
+    /*
+        Restart animation.
+    */
+
+    page.classList.remove(
+        "flipping-right"
+    );
+
+
+    void page.offsetWidth;
+
+
+    page.classList.add(
+        "flipping-right"
+    );
+
+
+    setTimeout(
+        async () => {
+
+            currentPage += 2;
+
+
+            if (
+                currentPage >
+                totalPages
+            ) {
+
+                currentPage =
+                    totalPages;
+
+            }
+
+
+            page.classList.remove(
+                "flipping-right"
+            );
+
+
+            await renderSpread();
+
+
+            isAnimating = false;
+
+        },
+
+        800
+    );
+
+};
+
+
+/* =====================================================
+   PREVIOUS PAGE
+===================================================== */
+
+window.previousPage =
+async function () {
+
+    if (isAnimating) {
+
+        return;
+
+    }
+
+
+    if (
+        currentPage <= 1
+    ) {
+
+        return;
+
+    }
+
+
+    isAnimating = true;
+
+
+    const page =
+        document.getElementById(
+            "leftPage"
+        );
+
+
+    /*
+        Restart animation.
+    */
+
+    page.classList.remove(
+        "flipping-left"
+    );
+
+
+    void page.offsetWidth;
+
+
+    page.classList.add(
+        "flipping-left"
+    );
+
+
+    setTimeout(
+        async () => {
+
+            currentPage -= 2;
+
+
+            if (
+                currentPage < 1
+            ) {
+
+                currentPage = 1;
+
+            }
+
+
+            page.classList.remove(
+                "flipping-left"
+            );
+
+
+            await renderSpread();
+
+
+            isAnimating = false;
+
+        },
+
+        800
+    );
+
+};
+
+
+/* =====================================================
+   KEYBOARD NAVIGATION
+===================================================== */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key ===
+            "ArrowRight"
+        ) {
+
+            nextPage();
+
+        }
+
+
+        if (
+            event.key ===
+            "ArrowLeft"
+        ) {
+
+            previousPage();
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   SIBYL IMAGE CONFIGURATION
+===================================================== */
+
+const sibylImages = [
+
+    "PICS/Sibyl-01.png",
+    "PICS/Sibyl-02.png",
+    "PICS/Sibyl-03.png",
+    "PICS/Sibyl-04.png",
+    "PICS/Sibyl-05.png",
+    "PICS/Sibyl-06.png",
+    "PICS/Sibyl-07.png",
+    "PICS/Sibyl-08.png",
+    "PICS/Sibyl-09.png"
+
+];
+
+
+const floatingLayer =
+    document.getElementById(
+        "floating-layer"
+    );
+
+
+/* =====================================================
+   RANDOM NUMBER
+===================================================== */
+
+function random(
+    min,
+    max
+) {
+
+    return (
+        Math.random() *
+        (max - min)
+    ) + min;
+
+}
+
+
+/* =====================================================
+   CREATE ONE SIBYL
+===================================================== */
+
+function createFloatingImage() {
+
+    /*
+        IMPORTANT:
+
+        Never allow more than
+        one Sibyl image.
+    */
+
+    if (
+        floatingLayer.children.length > 0
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+        Select a random image.
+    */
+
+    const src =
+        sibylImages[
+            Math.floor(
+                Math.random() *
+                sibylImages.length
+            )
+        ];
+
+
+    const img =
+        document.createElement(
+            "img"
+        );
+
+
+    img.src =
+        src;
+
+
+    img.className =
+        "floating-image";
+
+
+    /*
+        Wait until the image is
+        loaded.
+
+        CSS determines its size
+        using viewport units.
+    */
+
+    img.onload = () => {
+
+        floatingLayer.appendChild(
+            img
+        );
+
+
+        /*
+            Get the actual displayed
+            size after CSS scaling.
+        */
+
+        const rect =
+            img.getBoundingClientRect();
+
+
+        const imageWidth =
+            rect.width;
+
+
+        const imageHeight =
+            rect.height;
+
+
+        /*
+            Screen center.
+        */
+
+        const centerX =
+            window.innerWidth / 2;
+
+
+        const centerY =
+            window.innerHeight / 2;
+
+
+        /*
+            Random appearance
+            around the center.
+        */
+
+        const startX =
+            centerX +
+            random(
+                -120,
+                120
+            ) -
+            imageWidth / 2;
+
+
+        const startY =
+            centerY +
+            random(
+                -100,
+                100
+            ) -
+            imageHeight / 2;
+
+
+        img.style.left =
+            `${startX}px`;
+
+
+        img.style.top =
+            `${startY}px`;
+
+
+        /*
+            Slight rotation.
+        */
+
+        const rotation =
+            random(
+                -10,
+                10
+            );
+
+
+        img.style.transform =
+            `rotate(${rotation}deg)`;
+
+
+        /*
+            Start subtle movement.
+        */
+
+        animateFloatingImage(
+
+            img,
+
+            startX,
+
+            startY,
+
+            rotation
+
+        );
+
+
+        /*
+            Enable dragging.
+        */
+
+        enableDrag(img);
+
+    };
+
+
+    /*
+        If image fails to load,
+        try another one.
+    */
+
+    img.onerror = () => {
+
+        img.remove();
+
+        setTimeout(
+            createFloatingImage,
+            500
+        );
+
+    };
+
+}
+
+
+/* =====================================================
+   SIBYL FLOATING MOTION
+===================================================== */
+
+function animateFloatingImage(
+    img,
+    baseX,
+    baseY,
+    rotation
+) {
+
+    const amplitudeX =
+        random(
+            3,
+            8
+        );
+
+
+    const amplitudeY =
+        random(
+            3,
+            8
+        );
+
+
+    const speed =
+        random(
+            0.0005,
+            0.001
+        );
+
+
+    const startTime =
+        performance.now();
+
+
+    function animate(
+        currentTime
+    ) {
+
+        /*
+            Stop animation when
+            image has been removed.
+        */
+
+        if (
+            !document.body.contains(
+                img
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        /*
+            Do not apply automatic
+            movement while dragging.
+        */
+
+        if (
+            !img.classList.contains(
+                "dragging"
+            )
+        ) {
+
+            const elapsed =
+                currentTime -
+                startTime;
+
+
+            const x =
+                baseX +
+
+                Math.sin(
+                    elapsed * speed
+                ) *
+                amplitudeX;
+
+
+            const y =
+                baseY +
+
+                Math.cos(
+                    elapsed * speed
+                ) *
+                amplitudeY;
+
+
+            const r =
+                rotation +
+
+                Math.sin(
+                    elapsed *
+                    speed *
+                    0.7
+                ) *
+                1.5;
+
+
+            img.style.left =
+                `${x}px`;
+
+
+            img.style.top =
+                `${y}px`;
+
+
+            img.style.transform =
+                `rotate(${r}deg)`;
+
+        }
+
+
+        requestAnimationFrame(
+            animate
+        );
+
+    }
+
+
+    requestAnimationFrame(
+        animate
+    );
+
+}
+
+
+/* =====================================================
+   DRAG INTERACTION
+===================================================== */
+
+function enableDrag(
+    img
+) {
+
+    let dragging = false;
+
+
+    let offsetX = 0;
+
+
+    let offsetY = 0;
+
+
+    /*
+        POINTER DOWN
+    */
+
+    img.addEventListener(
+        "pointerdown",
+        event => {
+
+            event.preventDefault();
+
+
+            dragging = true;
+
+
+            img.classList.add(
+                "dragging"
+            );
+
+
+            const rect =
+                img.getBoundingClientRect();
+
+
+            offsetX =
+                event.clientX -
+                rect.left;
+
+
+            offsetY =
+                event.clientY -
+                rect.top;
+
+
+            img.setPointerCapture(
+                event.pointerId
+            );
+
+        }
+    );
+
+
+    /*
+        POINTER MOVE
+    */
+
+    img.addEventListener(
+        "pointermove",
+        event => {
+
+            if (!dragging) {
+
+                return;
+
+            }
+
+
+            const x =
+                event.clientX -
+                offsetX;
+
+
+            const y =
+                event.clientY -
+                offsetY;
+
+
+            img.style.left =
+                `${x}px`;
+
+
+            img.style.top =
+                `${y}px`;
+
+        }
+    );
+
+
+    /*
+        POINTER UP
+    */
+
+    img.addEventListener(
+        "pointerup",
+        event => {
+
+            if (!dragging) {
+
+                return;
+
+            }
+
+
+            dragging = false;
+
+
+            img.classList.remove(
+                "dragging"
+            );
+
+
+            /*
+                Check whether it
+                reached the edge.
+            */
+
+            checkEdge(img);
+
+        }
+    );
+
+
+    /*
+        POINTER CANCEL
+    */
+
+    img.addEventListener(
+        "pointercancel",
+        () => {
+
+            dragging = false;
+
+
+            img.classList.remove(
+                "dragging"
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   EDGE DETECTION
+===================================================== */
+
+function checkEdge(
+    img
+) {
+
+    const rect =
+        img.getBoundingClientRect();
+
+
+    /*
+        How close to the edge
+        the image must be before
+        it disappears.
+    */
+
+    const margin = 25;
+
+
+    const reachedEdge =
+
+        rect.left <
+            margin ||
+
+        rect.top <
+            margin ||
+
+        rect.right >
+            window.innerWidth -
+            margin ||
+
+        rect.bottom >
+            window.innerHeight -
+            margin;
+
+
+    if (
+        reachedEdge
+    ) {
+
+        removeFloatingImage(img);
+
+    }
+
+}
+
+
+/* =====================================================
+   REMOVE SIBYL
+===================================================== */
+
+function removeFloatingImage(
+    img
+) {
+
+    /*
+        Fade out.
+    */
+
+    img.classList.add(
+        "removing"
+    );
+
+
+    setTimeout(
+        () => {
+
+            img.remove();
+
+
+            /*
+                Wait a little before
+                introducing the next image.
+
+                This prevents the interaction
+                from feeling mechanical.
+            */
+
+            setTimeout(
+                createFloatingImage,
+                random(
+                    600,
+                    1400
+                )
+            );
+
+        },
+
+        500
+    );
+
+}
+
+
+/* =====================================================
+   START SIBYL SYSTEM
+===================================================== */
+
+setTimeout(
+    createFloatingImage,
+    1200
+);
+
+
+/* =====================================================
+   START PDF
+===================================================== */
+
+loadPDF();
+
+
+</script>
+
+</body>
+
+</html>
